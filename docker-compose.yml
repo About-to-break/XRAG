@@ -48,6 +48,19 @@ services:
     depends_on:
       - vllm
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    env_file:
+      - services/qdrant/.env
+    container_name: qdrant-xrag
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - xrag-net
+
 networks:
   xrag-net:
     name: xrag-net
@@ -55,3 +68,4 @@ networks:
 
 volumes:
   open_webui_data:
+  qdrant_storage:
