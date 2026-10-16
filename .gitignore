@@ -208,3 +208,5 @@ __marimo__/
 
 # Custom
 .idea
+constructor/data/*
+constructor/scripts/data/*
