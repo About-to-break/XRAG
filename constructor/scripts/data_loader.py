@@ -1,7 +1,15 @@
 import os
 import json
+from dotenv import load_dotenv
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
+load_dotenv(dotenv_path=".env")
+
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL")
+CORPUS_PATH = "data/scifact/raw/scifact/corpus.jsonl"
+QUERY_PATH = "data/scifact/raw/scifact/queries.jsonl"
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 def make_embeddings(corpus_path: str, query_path: str):
 
@@ -40,11 +48,13 @@ def make_embeddings(corpus_path: str, query_path: str):
             result.append({
                 **record,
                 "embedding": embedding.tolist(),
+                "embedder_model": EMBEDDING_MODEL,
             })
 
         return result
 
-    model = SentenceTransformer("BAAI/bge-base-en-v1.5")
+    model = SentenceTransformer(EMBEDDING_MODEL, device="cuda", token=HF_TOKEN)
+    #records = load_records(QUERY_PATH)
 
     corpus = load_records(corpus_path)
     queries = load_records(query_path)
@@ -56,14 +66,30 @@ def make_embeddings(corpus_path: str, query_path: str):
         corpus_text,
         normalize_embeddings=True,
         show_progress_bar=True,
+        device="cuda",
     )
     query_embeddings = model.encode(
         queries_text,
         normalize_embeddings=True,
         show_progress_bar=True,
+        device="cuda",
     )
 
     corpus_vectors = attach_embeddings(corpus, corpus_embeddings)
     query_vectors = attach_embeddings(queries, query_embeddings)
 
     return corpus_vectors, query_vectors
+
+    # TODO: Add LLM instruction 'Represent this sentence for searching relevant passages: (Scifact docs)'
+
+def load_to_qdrant():
+    pass
+
+def main():
+    corpus_vectors, query_vectors = make_embeddings(CORPUS_PATH, QUERY_PATH)
+    for i in range(3):
+        print(f"corpus -> {corpus_vectors[i]}")
+        print(f"query -> {query_vectors[i]}")
+
+if __name__ == "__main__":
+    main()
